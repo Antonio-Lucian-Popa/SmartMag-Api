@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: SMARTMAG/master.yaml
+      relativeToChangelogFile: true
