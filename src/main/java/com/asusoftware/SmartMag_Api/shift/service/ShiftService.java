@@ -33,9 +33,26 @@ public class ShiftService {
         return mapper.map(shift, ShiftDto.class);
     }
 
+    public List<ShiftDto> getShiftsByStore(UUID storeId) {
+        return shiftRepository.findByStoreId(storeId).stream()
+                .map(s -> mapper.map(s, ShiftDto.class))
+                .collect(Collectors.toList());
+    }
+
+
     public List<ShiftDto> getShiftsForStore(UUID storeId) {
         return shiftRepository.findByStoreId(storeId).stream()
                 .map(s -> mapper.map(s, ShiftDto.class))
                 .collect(Collectors.toList());
     }
+
+    public List<ShiftDto> getShiftsByUser(UUID keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return shiftRepository.findByUserId(user.getId()).stream()
+                .map(s -> mapper.map(s, ShiftDto.class))
+                .collect(Collectors.toList());
+    }
+
 }

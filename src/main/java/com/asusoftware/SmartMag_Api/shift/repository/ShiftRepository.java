@@ -19,4 +19,5 @@ public interface ShiftRepository extends JpaRepository<Shift, UUID> {
     boolean existsByUserIdAndStartTimeLessThanEqualAndEndTimeGreaterThanEqual(
             UUID userId, LocalDateTime end, LocalDateTime start
     );
+
 }
