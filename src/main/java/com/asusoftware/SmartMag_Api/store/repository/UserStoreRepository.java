@@ -14,4 +14,6 @@ public interface UserStoreRepository extends JpaRepository<UserStore, UUID> {
     List<UserStore> findByUserId(UUID userId);
     Optional<UserStore> findByUserIdAndStoreId(UUID userId, UUID storeId);
     void deleteByUserIdAndStoreId(UUID userId, UUID storeId);
+
+    boolean existsByUserIdAndStoreId(UUID userId, UUID storeId);
 }
