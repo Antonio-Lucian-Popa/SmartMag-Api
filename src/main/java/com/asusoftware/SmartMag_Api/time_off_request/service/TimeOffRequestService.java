@@ -1,6 +1,7 @@
 package com.asusoftware.SmartMag_Api.time_off_request.service;
 
 import com.asusoftware.SmartMag_Api.exception.ResourceNotFoundException;
+import com.asusoftware.SmartMag_Api.notification.service.NotificationService;
 import com.asusoftware.SmartMag_Api.time_off_request.model.TimeOffRequest;
 import com.asusoftware.SmartMag_Api.time_off_request.model.TimeOffRequestStatus;
 import com.asusoftware.SmartMag_Api.time_off_request.model.dto.CreateTimeOffRequestDto;
@@ -27,6 +28,7 @@ public class TimeOffRequestService {
 
     private final TimeOffRequestRepository timeOffRequestRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
     private final ModelMapper mapper;
 
     @Transactional
@@ -106,8 +108,23 @@ public class TimeOffRequestService {
         }
 
         request.setStatus(status);
-        // TODO: Notify user about the status change (e.g., via email or notification service)
-        return mapper.map(timeOffRequestRepository.save(request), TimeOffRequestDto.class);
+
+        TimeOffRequestDto timeOffRequestDto = mapper.map(timeOffRequestRepository.save(request), TimeOffRequestDto.class);
+
+        String message = status == TimeOffRequestStatus.APPROVED
+                ? "Cererea ta de concediu a fost aprobată!"
+                : "Cererea ta de concediu a fost respinsă.";
+
+        String type = status == TimeOffRequestStatus.APPROVED
+                ? "TIME_OFF_APPROVED"
+                : "TIME_OFF_REJECTED";
+
+        notificationService.sendNotification(
+                request.getUserId(),
+                message,
+                type
+        );
+        return timeOffRequestDto;
     }
 
     private UUID getUserCompanyId(UUID userId) {

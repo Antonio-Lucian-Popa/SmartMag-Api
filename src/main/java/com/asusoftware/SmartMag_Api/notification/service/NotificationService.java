@@ -5,6 +5,7 @@ import com.asusoftware.SmartMag_Api.notification.model.Notification;
 import com.asusoftware.SmartMag_Api.notification.model.dto.NotificationMessageDto;
 import com.asusoftware.SmartMag_Api.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
