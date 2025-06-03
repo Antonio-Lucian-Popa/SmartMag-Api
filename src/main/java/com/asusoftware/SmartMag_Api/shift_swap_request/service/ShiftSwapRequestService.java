@@ -1,5 +1,6 @@
 package com.asusoftware.SmartMag_Api.shift_swap_request.service;
 
+import com.asusoftware.SmartMag_Api.audit_log.service.AuditLogService;
 import com.asusoftware.SmartMag_Api.exception.ResourceNotFoundException;
 import com.asusoftware.SmartMag_Api.notification.service.NotificationService;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.ShiftSwapRequest;
@@ -25,6 +26,7 @@ public class ShiftSwapRequestService {
     private final ShiftSwapRequestRepository shiftSwapRequestRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
     private final ModelMapper mapper;
 
     @Transactional
@@ -57,6 +59,13 @@ public class ShiftSwapRequestService {
                 "Ai primit o solicitare de schimb de tură pentru data " + dto.getDate() + " de la: " + fromUser.getFirstName() + ".",
                 "SHIFT_SWAP_REQUEST"
         );
+
+        User toUser = userRepository.findById(dto.getToUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Target user not found"));
+
+        // Logare audit
+        auditLogService.log(fromUser.getId(), "CREATE_SHIFT_SWAP_REQUEST", "Solicitare către: " + toUser.getEmail() + " din partea " + fromUser.getEmail()
+                + ", Data: " + dto.getDate() + ", Tipul turei: " + dto.getShiftType());
 
         return mapper.map(shiftSwapRequest, ShiftSwapRequestDto.class);
     }
@@ -104,6 +113,9 @@ public class ShiftSwapRequestService {
                 "Solicitarea de schimb de tură pentru data " + request.getDate() + " a fost " + (approve ? "aprobată" : "respinsă") + ".",
                 "SHIFT_SWAP_RESPONSE"
         );
+
+        // Logare audit
+        auditLogService.log(user.getId(), "UPDATE_SHIFT_SWAP_STATUS", "Request ID: " + requestId + ", Status: " + request.getStatus());
 
         return mapper.map(updatedRequest, ShiftSwapRequestDto.class);
     }
