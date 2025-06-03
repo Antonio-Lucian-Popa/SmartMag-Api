@@ -109,22 +109,26 @@ public class TimeOffRequestService {
 
         request.setStatus(status);
 
-        TimeOffRequestDto timeOffRequestDto = mapper.map(timeOffRequestRepository.save(request), TimeOffRequestDto.class);
+        TimeOffRequest saved = timeOffRequestRepository.save(request);
 
-        String message = status == TimeOffRequestStatus.APPROVED
-                ? "Cererea ta de concediu a fost aprobată!"
-                : "Cererea ta de concediu a fost respinsă.";
+        // Notificare automată
+        String message = switch (status) {
+            case APPROVED -> "Cererea ta de concediu a fost aprobată!";
+            case REJECTED -> "Cererea ta de concediu a fost respinsă.";
+            default -> null;
+        };
 
-        String type = status == TimeOffRequestStatus.APPROVED
-                ? "TIME_OFF_APPROVED"
-                : "TIME_OFF_REJECTED";
+        String type = switch (status) {
+            case APPROVED -> "TIME_OFF_APPROVED";
+            case REJECTED -> "TIME_OFF_REJECTED";
+            default -> null;
+        };
 
-        notificationService.sendNotification(
-                request.getUserId(),
-                message,
-                type
-        );
-        return timeOffRequestDto;
+        if (message != null && type != null) {
+            notificationService.sendNotification(request.getUserId(), message, type);
+        }
+
+        return mapper.map(saved, TimeOffRequestDto.class);
     }
 
     private UUID getUserCompanyId(UUID userId) {
