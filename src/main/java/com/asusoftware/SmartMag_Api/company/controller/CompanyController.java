@@ -3,6 +3,11 @@ package com.asusoftware.SmartMag_Api.company.controller;
 import com.asusoftware.SmartMag_Api.company.model.dto.CompanyDto;
 import com.asusoftware.SmartMag_Api.company.model.dto.CreateCompanyDto;
 import com.asusoftware.SmartMag_Api.company.service.CompanyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/company")
 @RequiredArgsConstructor
+@Tag(name = "Company", description = "Operațiuni pentru gestionarea companiei utilizatorului logat")
 public class CompanyController {
 
     private final CompanyService companyService;
@@ -31,6 +37,16 @@ public class CompanyController {
      * @param principal Jwt token-ul userului logat
      * @return Obiectul CompanyDto cu detalii despre compania creată
      */
+    @Operation(
+            summary = "Creează o companie",
+            description = "Creează o companie nouă și setează utilizatorul logat ca OWNER.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Companie creată cu succes",
+                            content = @Content(schema = @Schema(implementation = CompanyDto.class))),
+                    @ApiResponse(responseCode = "400", description = "Date invalide"),
+                    @ApiResponse(responseCode = "401", description = "Neautorizat")
+            }
+    )
     @PostMapping
     public ResponseEntity<CompanyDto> createCompany(
             @Valid @RequestBody CreateCompanyDto dto,
@@ -47,6 +63,15 @@ public class CompanyController {
      * @param principal Jwt token-ul userului logat
      * @return Obiectul CompanyDto cu informațiile companiei curente
      */
+    @Operation(
+            summary = "Obține compania utilizatorului",
+            description = "Returnează compania asociată utilizatorului logat (OWNER sau membru).",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Companie găsită",
+                            content = @Content(schema = @Schema(implementation = CompanyDto.class))),
+                    @ApiResponse(responseCode = "401", description = "Neautorizat")
+            }
+    )
     @GetMapping("/me")
     public ResponseEntity<CompanyDto> getMyCompany(@AuthenticationPrincipal Jwt principal) {
         UUID keycloakId = UUID.fromString(principal.getSubject());
@@ -60,6 +85,16 @@ public class CompanyController {
      * @param principal Jwt token-ul userului logat
      * @return Obiectul CompanyDto actualizat
      */
+    @Operation(
+            summary = "Actualizează compania",
+            description = "Actualizează informațiile companiei curente (disponibil doar pentru OWNER).",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Companie actualizată",
+                            content = @Content(schema = @Schema(implementation = CompanyDto.class))),
+                    @ApiResponse(responseCode = "400", description = "Date invalide"),
+                    @ApiResponse(responseCode = "401", description = "Neautorizat")
+            }
+    )
     @PutMapping
     public ResponseEntity<CompanyDto> updateCompany(
             @AuthenticationPrincipal Jwt principal,
@@ -76,6 +111,14 @@ public class CompanyController {
      * @param principal Jwt token-ul userului logat
      * @return 204 No Content dacă ștergerea s-a realizat cu succes
      */
+    @Operation(
+            summary = "Șterge compania",
+            description = "Șterge compania utilizatorului logat (doar dacă este OWNER).",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Companie ștearsă"),
+                    @ApiResponse(responseCode = "401", description = "Neautorizat")
+            }
+    )
     @DeleteMapping
     public ResponseEntity<Void> deleteCompany(@AuthenticationPrincipal Jwt principal) {
         UUID keycloakId = UUID.fromString(principal.getSubject());
