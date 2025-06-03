@@ -3,6 +3,8 @@ package com.asusoftware.SmartMag_Api.shift_swap_request.service;
 import com.asusoftware.SmartMag_Api.audit_log.service.AuditLogService;
 import com.asusoftware.SmartMag_Api.exception.ResourceNotFoundException;
 import com.asusoftware.SmartMag_Api.notification.service.NotificationService;
+import com.asusoftware.SmartMag_Api.shift_swap_history.model.ShiftSwapHistory;
+import com.asusoftware.SmartMag_Api.shift_swap_history.service.ShiftSwapHistoryService;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.ShiftSwapRequest;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.ShiftSwapStatus;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.dto.CreateShiftSwapRequestDto;
@@ -26,6 +28,7 @@ public class ShiftSwapRequestService {
     private final ShiftSwapRequestRepository shiftSwapRequestRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final ShiftSwapHistoryService shiftSwapHistoryService;
     private final AuditLogService auditLogService;
     private final ModelMapper mapper;
 
@@ -117,7 +120,24 @@ public class ShiftSwapRequestService {
         // Logare audit
         auditLogService.log(user.getId(), "UPDATE_SHIFT_SWAP_STATUS", "Request ID: " + requestId + ", Status: " + request.getStatus());
 
-        return mapper.map(updatedRequest, ShiftSwapRequestDto.class);
+        ShiftSwapRequestDto shiftSwapRequestDto = mapper.map(updatedRequest, ShiftSwapRequestDto.class);
+
+        CreateShiftSwapRequestDto createShiftSwapRequestDto = CreateShiftSwapRequestDto.builder()
+                .fromUserId(shiftSwapRequestDto.getFromUserId())
+                .toUserId(shiftSwapRequestDto.getToUserId())
+                .storeId(shiftSwapRequestDto.getStoreId())
+                .date(shiftSwapRequestDto.getDate())
+                .shiftType(shiftSwapRequestDto.getShiftType())
+                .status(shiftSwapRequestDto.getStatus())
+                .build();
+
+        // Salvare în ShiftSwapHistory
+        shiftSwapHistoryService.createShiftSwapRequest(
+                createShiftSwapRequestDto,
+                keycloakId
+        );
+
+        return shiftSwapRequestDto;
     }
 }
 

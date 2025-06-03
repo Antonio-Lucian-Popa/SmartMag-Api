@@ -18,6 +18,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class ShiftSwapHistoryService {
                 .storeId(dto.getStoreId())
                 .date(dto.getDate())
                 .shiftType(dto.getShiftType())
-                .status(ShiftSwapStatus.PENDING)
+                .status(dto.getStatus())
                 .build();
 
         repository.save(request);
@@ -116,6 +117,24 @@ public class ShiftSwapHistoryService {
 
         return historyRepository.findAllByOldUserIdOrNewUserId(user.getId(), user.getId())
                 .stream()
+                .map(history -> mapper.map(history, ShiftSwapHistoryDto.class))
+                .collect(Collectors.toList());
+    }
+
+    public List<ShiftSwapHistoryDto> getMyShiftSwapHistoryFiltered(UUID keycloakId, LocalDate startDate, LocalDate endDate, UUID storeId) {
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        List<ShiftSwapHistory> all = historyRepository.findAllByOldUserIdOrNewUserId(user.getId(), user.getId());
+
+        return all.stream()
+                .filter(h -> {
+                    boolean matches = true;
+                    if (startDate != null) matches &= !h.getDate().isBefore(startDate);
+                    if (endDate != null) matches &= !h.getDate().isAfter(endDate);
+                    if (storeId != null) matches &= h.getStoreId().equals(storeId);
+                    return matches;
+                })
                 .map(history -> mapper.map(history, ShiftSwapHistoryDto.class))
                 .collect(Collectors.toList());
     }
