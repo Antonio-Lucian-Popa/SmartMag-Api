@@ -118,3 +118,38 @@ CREATE TABLE notification (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+--changeset admin:create-table-audit-log
+CREATE TABLE audit_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id),
+    action VARCHAR(255) NOT NULL,
+    entity VARCHAR(100) NOT NULL,
+    entity_id UUID,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT
+);
+
+--changeset admin:create-table-shift-swap-history
+CREATE TABLE shift_swap_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    old_user_id UUID NOT NULL REFERENCES users(id),
+    new_user_id UUID NOT NULL REFERENCES users(id),
+    store_id UUID NOT NULL REFERENCES store(id),
+    date DATE NOT NULL,
+    shift_type VARCHAR(20) NOT NULL,
+    approved_by UUID REFERENCES users(id),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+--changeset admin:create-table-file-upload
+CREATE TABLE file_upload (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id),
+    file_name VARCHAR(255),
+    file_url TEXT NOT NULL,
+    entity_type VARCHAR(50), -- ex: 'time_off_request', 'product'
+    entity_id UUID,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,5 +1,6 @@
 package com.asusoftware.SmartMag_Api.time_off_request.service;
 
+import com.asusoftware.SmartMag_Api.audit_log.service.AuditLogService;
 import com.asusoftware.SmartMag_Api.exception.ResourceNotFoundException;
 import com.asusoftware.SmartMag_Api.notification.service.NotificationService;
 import com.asusoftware.SmartMag_Api.time_off_request.model.TimeOffRequest;
@@ -29,6 +30,7 @@ public class TimeOffRequestService {
     private final TimeOffRequestRepository timeOffRequestRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
     private final ModelMapper mapper;
 
     @Transactional
@@ -83,11 +85,13 @@ public class TimeOffRequestService {
     @Transactional
     public void approveRequest(UUID requestId, UUID keycloakId) {
         updateStatus(requestId, TimeOffRequestStatus.APPROVED, keycloakId);
+        auditLogService.log(keycloakId, "TIME_OFF_APPROVED", "Cerere concediu aprobată: " + requestId);
     }
 
     @Transactional
     public void rejectRequest(UUID requestId, UUID keycloakId) {
         updateStatus(requestId, TimeOffRequestStatus.REJECTED, keycloakId);
+        auditLogService.log(keycloakId, "TIME_OFF_REJECTED", "Cerere concediu a fost respinsa: " + requestId);
     }
 
 
