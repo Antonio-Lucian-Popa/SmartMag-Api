@@ -2,6 +2,9 @@ package com.asusoftware.SmartMag_Api.audit_log.controller;
 
 import com.asusoftware.SmartMag_Api.audit_log.model.dto.AuditLogDto;
 import com.asusoftware.SmartMag_Api.audit_log.service.AuditLogService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +20,7 @@ import java.util.UUID;
  * Permite vizualizarea acțiunilor efectuate de utilizatori dintr-o companie.
  * Accesul este permis doar utilizatorilor cu rolul OWNER sau MANAGER.
  */
+@Tag(name = "Audit Log", description = "Operațiuni pentru log-uri de audit")
 @RestController
 @RequestMapping("/api/v1/audit-log")
 @RequiredArgsConstructor
@@ -24,13 +28,14 @@ public class AuditLogController {
 
     private final AuditLogService auditLogService;
 
-    /**
-     * Obține toate log-urile din sistem pentru compania utilizatorului logat.
-     * Doar OWNER sau MANAGER pot accesa această rută.
-     *
-     * @param principal Token JWT al utilizatorului autentificat.
-     * @return Lista de log-uri pentru compania din care face parte utilizatorul.
-     */
+    @Operation(
+            summary = "Listare log-uri companie",
+            description = "Obține toate log-urile de audit pentru compania din care face parte utilizatorul curent. Doar OWNER sau MANAGER pot accesa.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Log-urile au fost returnate cu succes"),
+                    @ApiResponse(responseCode = "403", description = "Acces interzis - nu ai rolul necesar")
+            }
+    )
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<List<AuditLogDto>> getCompanyAuditLogs(@AuthenticationPrincipal Jwt principal) {
@@ -38,15 +43,15 @@ public class AuditLogController {
         return ResponseEntity.ok(auditLogService.getLogsForCompany(keycloakId));
     }
 
-    /**
-     * Obține toate log-urile asociate unui anumit utilizator din companie.
-     * Poate fi folosit pentru tracking de acțiuni specifice ale unui angajat.
-     * Accesul este permis doar OWNER și MANAGER din compania respectivă.
-     *
-     * @param userId     ID-ul utilizatorului pentru care se cer log-urile.
-     * @param principal  Token JWT al utilizatorului logat.
-     * @return Lista de log-uri asociate utilizatorului dat.
-     */
+    @Operation(
+            summary = "Listare log-uri pentru un utilizator",
+            description = "Obține toate log-urile asociate unui utilizator din companie. Accesibil doar pentru OWNER sau MANAGER.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Log-urile utilizatorului au fost returnate cu succes"),
+                    @ApiResponse(responseCode = "403", description = "Acces interzis - nu ai permisiunea necesară"),
+                    @ApiResponse(responseCode = "404", description = "Utilizatorul nu a fost găsit")
+            }
+    )
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<List<AuditLogDto>> getUserLogs(
