@@ -1,6 +1,7 @@
 package com.asusoftware.SmartMag_Api.shift_swap_request.service;
 
 import com.asusoftware.SmartMag_Api.exception.ResourceNotFoundException;
+import com.asusoftware.SmartMag_Api.notification.service.NotificationService;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.ShiftSwapRequest;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.ShiftSwapStatus;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.dto.CreateShiftSwapRequestDto;
@@ -23,6 +24,7 @@ public class ShiftSwapRequestService {
 
     private final ShiftSwapRequestRepository shiftSwapRequestRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
     private final ModelMapper mapper;
 
     @Transactional
@@ -47,7 +49,16 @@ public class ShiftSwapRequestService {
                 .status(ShiftSwapStatus.PENDING)
                 .build();
 
-        return mapper.map(shiftSwapRequestRepository.save(request), ShiftSwapRequestDto.class);
+        ShiftSwapRequest shiftSwapRequest = shiftSwapRequestRepository.save(request);
+
+        // Trimite notificare utilizatorului target
+        notificationService.sendNotification(
+                dto.getToUserId(),
+                "Ai primit o solicitare de schimb de tură pentru data " + dto.getDate() + " de la: " + fromUser.getFirstName() + ".",
+                "SHIFT_SWAP_REQUEST"
+        );
+
+        return mapper.map(shiftSwapRequest, ShiftSwapRequestDto.class);
     }
 
     public List<ShiftSwapRequestDto> getMyRequests(UUID keycloakId) {
@@ -84,7 +95,17 @@ public class ShiftSwapRequestService {
         }
 
         request.setStatus(approve ? ShiftSwapStatus.APPROVED : ShiftSwapStatus.REJECTED);
-        return mapper.map(shiftSwapRequestRepository.save(request), ShiftSwapRequestDto.class);
+
+        ShiftSwapRequest updatedRequest = shiftSwapRequestRepository.save(request);
+
+        // Trimite notificare utilizatorului care a făcut solicitarea
+        notificationService.sendNotification(
+                request.getFromUserId(),
+                "Solicitarea de schimb de tură pentru data " + request.getDate() + " a fost " + (approve ? "aprobată" : "respinsă") + ".",
+                "SHIFT_SWAP_RESPONSE"
+        );
+
+        return mapper.map(updatedRequest, ShiftSwapRequestDto.class);
     }
 }
 
