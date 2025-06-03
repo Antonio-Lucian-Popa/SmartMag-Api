@@ -3,6 +3,7 @@ package com.asusoftware.SmartMag_Api.shift_swap_history.service;
 import com.asusoftware.SmartMag_Api.exception.ResourceNotFoundException;
 import com.asusoftware.SmartMag_Api.notification.service.NotificationService;
 import com.asusoftware.SmartMag_Api.shift_swap_history.model.ShiftSwapHistory;
+import com.asusoftware.SmartMag_Api.shift_swap_history.model.dto.ShiftSwapHistoryDto;
 import com.asusoftware.SmartMag_Api.shift_swap_history.repository.ShiftSwapHistoryRepository;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.ShiftSwapRequest;
 import com.asusoftware.SmartMag_Api.shift_swap_request.model.ShiftSwapStatus;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ShiftSwapRequestService {
+public class ShiftSwapHistoryService {
 
     private final ShiftSwapRequestRepository repository;
     private final ShiftSwapHistoryRepository historyRepository;
@@ -108,4 +109,15 @@ public class ShiftSwapRequestService {
 
         historyRepository.save(history);
     }
+
+    public List<ShiftSwapHistoryDto> getMySwapHistory(UUID keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return historyRepository.findAllByOldUserIdOrNewUserId(user.getId(), user.getId())
+                .stream()
+                .map(history -> mapper.map(history, ShiftSwapHistoryDto.class))
+                .collect(Collectors.toList());
+    }
+
 }
